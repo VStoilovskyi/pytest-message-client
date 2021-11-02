@@ -6,7 +6,7 @@ from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.runner import CallInfo
 
-from .listiner import Listener
+from pytest_message.listeners.listiner import Listener
 
 
 def notify(listeners: Iterable[Listener]):

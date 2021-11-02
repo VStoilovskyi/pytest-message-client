@@ -5,7 +5,7 @@ from typing import Any, List
 from _pytest.reports import TestReport
 from slack_sdk import WebClient
 
-from .listiner import Listener
+from pytest_message.listeners.listiner import Listener
 
 
 __all__ = ['SlackListener']
@@ -19,7 +19,7 @@ class Status:
     skipped: int
 
 
-_DIVIDER = {
+DIVIDER = {
     "type": "divider"
 }
 
@@ -42,7 +42,7 @@ class SlackListener(Listener):
         blocks = [self._get_heading_block(title)]
         for func_name, report in self.state:
             blocks.extend(self._prepare_test_report_block(func_name, report))
-            blocks.append(_DIVIDER)
+            blocks.append(DIVIDER)
 
         self._client.chat_postMessage(channel=self._chat, text=title, blocks=blocks)
 
