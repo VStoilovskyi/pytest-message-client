@@ -1,7 +1,7 @@
 """Config for setup package pytest agent."""
 from setuptools import setup
 
-__version__ = '0.1.0b0'
+__version__ = '0.1.0b3'
 
 setup(
     name='pytest-message',
