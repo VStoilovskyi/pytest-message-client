@@ -1,7 +1,7 @@
 """Config for setup package pytest agent."""
-from setuptools import setup
+from setuptools import setup, find_packages
 
-__version__ = '0.1.0b3'
+__version__ = '0.1.0b4'
 
 setup(
     name='pytest-message',
@@ -9,8 +9,8 @@ setup(
     description='Pytest plugin for sending report message of marked tests execution',
     author_email='vadym.stoilovskyi@gmail.com',
     url='https://github.com/VStoilovskyi/pytest-message',
-    packages=['pytest_message'],
-    install_requires=['pytest>=6.2.5', 'slack-sdk==3.11.2'],
+    packages=find_packages(),
+    install_requires=['pytest>=6.2.5', 'slack-sdk>=3.11.2'],
     license='Apache 2.0',
     keywords=['notify', 'pytest', 'message'],
     classifiers=[
