@@ -1,9 +1,10 @@
 import dataclasses
 import datetime
+import logging
 from typing import Any, List
 
 from _pytest.reports import TestReport
-from slack_sdk import WebClient
+from slack_sdk import WebClient, errors
 
 from pytest_message.listeners.listiner import Listener
 
@@ -22,6 +23,8 @@ class Status:
 DIVIDER = {
     "type": "divider"
 }
+
+MAX_TEXT_ERROR_SIZE = 1000
 
 
 class SlackListener(Listener):
@@ -44,7 +47,10 @@ class SlackListener(Listener):
             blocks.extend(self._prepare_test_report_block(func_name, report))
             blocks.append(DIVIDER)
 
-        self._client.chat_postMessage(channel=self._chat, text=title, blocks=blocks)
+        try:
+            self._client.chat_postMessage(channel=self._chat, text=title, blocks=blocks)
+        except errors.SlackApiError as e:
+            logging.warning(str(e))
 
     @staticmethod
     def _get_heading_block(heading: str) -> dict:
@@ -113,12 +119,16 @@ class SlackListener(Listener):
     @staticmethod
     def _create_testfunc_report_blocks(errors: List[str]) -> List[dict]:
         """Creates blocks list for error messages"""
-        return [
-            {
+        out = []
+        for error in errors:
+            if len(error) > MAX_TEXT_ERROR_SIZE:
+                error = error[:MAX_TEXT_ERROR_SIZE] + "...."
+
+            out.append({
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f'```{x}```'
+                    "text": f'```{error}```'
                 }
-            } for x in errors
-        ]
+            })
+        return out
