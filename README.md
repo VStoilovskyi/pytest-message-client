@@ -4,12 +4,12 @@ Pytest-message is a pytest extension for reporting to various messangers.
 
 Pytest-message gives an ability to send report message of test status for only marked tests.
 
-###Installation
+### Installation
 ```shell
 pip install pytest-message
 ```
 
-###Example
+### Example
 Currently `pytest-message` integrates with slack only(other popular messengers integration in progress) 
 
 In order to receive messages you need to define listener and pass list of listeners to `notify` decorator
@@ -29,7 +29,7 @@ def test_payment_id_duplicates():
 You may pass as much listeners as you want to get report messages to all listeners.
 
 
-###Launch
+### Launch
 
 In order to start tests with Pytest-Message you must provide `--notify` flag:
 ```shell
