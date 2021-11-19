@@ -22,7 +22,7 @@ slack_listener = SlackListener(token="slack_secret_token", chat='chat_id')
 
 
 @notify([slack_listener])
-def test_payment_id_duplicates():
+def test_sum():
     assert 1 + 1 == 2
 ```
 
