@@ -1,12 +1,26 @@
 """Config for setup package pytest agent."""
+
+import os
+
 from setuptools import setup, find_packages
 
 __version__ = '0.1.0b5'
+
+
+def read_file(fname):
+    """Read the given file.
+    :param fname: Filename to be read
+    :return:      File content
+    """
+    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+        return f.read()
+
 
 setup(
     name='pytest-message',
     version=__version__,
     description='Pytest plugin for sending report message of marked tests execution',
+    long_description=read_file('README.md'),
     author_email='vadym.stoilovskyi@gmail.com',
     url='https://github.com/VStoilovskyi/pytest-message',
     packages=find_packages(),
@@ -15,7 +29,8 @@ setup(
     keywords=['notify', 'pytest', 'message'],
     classifiers=[
         'Framework :: Pytest',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9'
     ],
     entry_points={
         'pytest11': [
