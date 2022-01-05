@@ -29,6 +29,6 @@ jobs:
     - name: Install dependencies
       if: steps.cache-pipenv.outputs.cache-hit != 'true'
       run: |
-        pipenv install --deploy --dev
+        pipenv install --system --dev
     - name: Test pytest
       run: pytest tests
