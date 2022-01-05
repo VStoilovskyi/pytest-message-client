@@ -20,6 +20,7 @@ setup(
     name='pytest-message',
     version=__version__,
     description='Pytest plugin for sending report message of marked tests execution',
+    long_description_content_type="text/markdown",
     long_description=read_file('README.md'),
     author_email='vadym.stoilovskyi@gmail.com',
     url='https://github.com/VStoilovskyi/pytest-message',
