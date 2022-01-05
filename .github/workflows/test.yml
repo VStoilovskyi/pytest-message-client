@@ -3,7 +3,7 @@ name: Tests
 on: [push]
 
 jobs:
-  build:
+  unit_tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,7 +25,6 @@ jobs:
         key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
 
     - name: Install dependencies
-      if: steps.cache-pipenv.outputs.cache-hit != 'true'
       run: |
         pipenv install --system --dev
     - name: Test pytest

@@ -1,9 +1,27 @@
-name: Code checks
+name: Checks
 
 on: [push]
 
 jobs:
-  static_checks:
+  flake_checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.9 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - run: pip install --upgrade pip
+      - run: pip install mypy flake8
+
+      - name: Run flake8 checks
+        run: flake8 pytest_message
+
+  mypy_checks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,7 +42,32 @@ jobs:
         run: |
           pipenv install --system --dev
 
-      - name: Run flake8 checks
-        run: flake8 pytest_message
       - name: Run mypy checks
         run: mypy pytest_message
+
+  unit_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.9 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pipenv
+        run: |
+          python -m pip install --upgrade pipenv wheel
+      - id: cache-pipenv
+        uses: actions/cache@v1
+        with:
+          path: ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+      - name: Install dependencies
+        run: |
+          pipenv install --system --dev
+      - name: Test pytest
+        run: python -m pytest .
