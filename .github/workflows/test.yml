@@ -17,11 +17,18 @@ jobs:
     - name: export PYTHONPATH
       run: |
         export PYTHONPATH=.
-    - name: Install dependencies
+    - name: Install pipenv
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
-        pip install pytest
+        python -m pip install --upgrade pipenv wheel
+    - id: cache-pipenv
+      uses: actions/cache@v1
+      with:
+        path: ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+    - name: Install dependencies
+      if: steps.cache-pipenv.outputs.cache-hit != 'true'
+      run: |
+        pipenv install --deploy --dev
     - name: Test pytest
-      run: pytest -m tests
+      run: pytest tests
