@@ -105,8 +105,7 @@ class SlackListener(Listener):
             ]
         }
 
-    @staticmethod
-    def _create_testfunc_status_msg(status: Status) -> str:
+    def _create_testfunc_status_msg(self, status: Status) -> str:
         if status.total == 1:
             if status.failed:
                 return ":red_circle: *Failed*"
@@ -114,7 +113,18 @@ class SlackListener(Listener):
                 return ':large_green_circle: *Passed*'
             if status.skipped:
                 return ':white_circle: *Skipped*'
-        return f':large_green_circle: *Passed*: {status.passed}\n:red_circle: *Failed*: {status.failed}'
+        return self._format_parametrized_report(status)
+
+    @staticmethod
+    def _format_parametrized_report(status):
+        msg = []
+        if status.passed:
+            msg.append(f':large_green_circle: *Passed*: {status.passed}')
+        if status.failed:
+            msg.append(f':red_circle: *Failed*: {status.failed}')
+        if status.skipped:
+            msg.append(f':white_circle: *Skipped*: {status.skipped}')
+        return '\n'.join(msg)
 
     @staticmethod
     def _create_testfunc_report_blocks(errors: List[str]) -> List[dict]:
