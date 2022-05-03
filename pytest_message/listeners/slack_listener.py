@@ -122,6 +122,8 @@ class SlackListener(Listener):
             msg.append(f':large_green_circle: *Passed*: {status.passed}')
         if status.failed:
             msg.append(f':red_circle: *Failed*: {status.failed}')
+        if status.skipped:
+            msg.append(f':white_circle: *Skipped*: {status.skipped}')
         return '\n'.join(msg)
 
     @staticmethod
