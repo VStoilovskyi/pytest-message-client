@@ -2,7 +2,7 @@ import dataclasses
 import datetime
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, List
+from typing import Any, List, Optional
 
 from _pytest.reports import TestReport
 from slack_sdk import WebClient, errors
@@ -35,10 +35,11 @@ class ErrReportMetadata:
 
 
 class SlackListener(Listener):
-    def __init__(self, token: str, chat: str):
+    def __init__(self, token: str, chat: str, *, on_error_add: Optional[str] = None):
         self.state = []
         self._client = self.configure(token)
         self._chat = chat
+        self._on_error_add = on_error_add
 
     @staticmethod
     def configure(token: str) -> WebClient:
@@ -62,7 +63,7 @@ class SlackListener(Listener):
             status, err = self._get_test_info(report)
             header = self._create_testfunc_header_block(status, func_name)
 
-            header_response = self._client.chat_postMessage(channel=self._chat, blocks=[header])
+            header_response = self._client.chat_postMessage(channel=self._chat, blocks=header)
             thread_ts = header_response.data['ts']
 
             err_blocks = self._prepare_err_report_block(report)
@@ -115,21 +116,36 @@ class SlackListener(Listener):
 
         return Status(total, passed, failed, skipped), errors
 
-    def _create_testfunc_header_block(self, status: Status, header) -> dict:
+    def _create_testfunc_header_block(self, status: Status, header) -> List[dict]:
 
-        return {
-            "type": "section",
-            "fields": [
-                {
-                    "type": "mrkdwn",
-                    "text": f"*{header}*"
-                },
-                {
-                    "type": "mrkdwn",
-                    "text": self._create_testfunc_status_msg(status)
-                }
-            ]
-        }
+        blocks = [
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*{header}*"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": self._create_testfunc_status_msg(status)
+                    }
+                ]
+            }
+        ]
+        if self._on_error_add and (status.failed or status.skipped):
+            blocks.append({
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*{self._on_error_add}*"
+                    }
+                ]
+
+            })
+
+        return blocks
 
     def _create_testfunc_status_msg(self, status: Status) -> str:
         if status.total == 1:
