@@ -32,7 +32,7 @@ You may pass as much listeners as you want to get report messages to all listene
 SlackListener constructor takes **required**: `token, chat` and **optional**:  `on_error_add` fields.
 - `token` - slack token
 - `chat` - slack chat id
-- `on_error_add`[Optional] - takes string which will be added after failed or skipped test function name in main thread.
+- `on_error_add`_[Optional]_ - takes string which will be added after failed or skipped test function name in main thread.
  Is nice for tagging responsible person if required or add any custom comment.
 
 

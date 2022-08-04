@@ -133,7 +133,7 @@ class SlackListener(Listener):
                 ]
             }
         ]
-        if status.failed or status.skipped:
+        if self._on_error_add and (status.failed or status.skipped):
             blocks.append({
                 "type": "section",
                 "fields": [
