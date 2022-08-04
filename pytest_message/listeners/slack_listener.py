@@ -1,13 +1,13 @@
 import dataclasses
 import datetime
-import logging
+import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, List
 
 from _pytest.reports import TestReport
 from slack_sdk import WebClient, errors
 
 from pytest_message.listeners.listiner import Listener
-
 
 __all__ = ['SlackListener']
 
@@ -25,6 +25,13 @@ DIVIDER = {
 }
 
 MAX_TEXT_ERROR_SIZE = 1000
+SLACK_LISTENER_ERR_CHUNK_SIZE = int(os.getenv("SLACK_LISTENER_ERR_CHUNK_SIZE", 10))
+
+
+@dataclasses.dataclass
+class ErrReportMetadata:
+    thread_id: str
+    reports: List[dict]
 
 
 class SlackListener(Listener):
@@ -42,33 +49,52 @@ class SlackListener(Listener):
 
     def finish(self) -> None:
         title = f'Test report result - {datetime.datetime.now().ctime()}'
-        blocks = [self._get_heading_block(title)]
-        for func_name, report in self.state:
-            blocks.extend(self._prepare_test_report_block(func_name, report))
-            blocks.append(DIVIDER)
-
         try:
-            self._client.chat_postMessage(channel=self._chat, text=title, blocks=blocks)
-        except errors.SlackApiError as e:
-            logging.warning(str(e))
+            self._client.chat_postMessage(channel=self._chat, blocks=[self._get_heading_block(title)])
+            self._send_error_to_threads()
+        except errors.SlackApiError:
+            pass
+
+    def _send_error_to_threads(self):
+        grouped_err_messages = []
+        #  Send all Test metadata messages first, then append to threads
+        for func_name, report in self.state:
+            status, err = self._get_test_info(report)
+            header = self._create_testfunc_header_block(status, func_name)
+
+            header_response = self._client.chat_postMessage(channel=self._chat, blocks=[header])
+            thread_ts = header_response.data['ts']
+
+            err_blocks = self._prepare_err_report_block(report)
+            grouped_err_messages.extend(self._get_thread_report_chunks(err_blocks, thread_ts))
+        with ThreadPoolExecutor() as pool:
+            pool.map(self._send_err_report_msg, grouped_err_messages)
+
+    def _send_err_report_msg(self, report_thread: ErrReportMetadata) -> None:
+        self._client.chat_postMessage(channel=self._chat, blocks=report_thread.reports,
+                                      thread_ts=report_thread.thread_id)
+
+    @staticmethod
+    def _get_thread_report_chunks(lst: List[dict], thread_id: str) -> List[ErrReportMetadata]:
+        #  Split entire list to list of chunks with size SLACK_LISTENER_ERR_CHUNK_SIZE
+        chunks = [lst[i:i + SLACK_LISTENER_ERR_CHUNK_SIZE] for i in range(0, len(lst), SLACK_LISTENER_ERR_CHUNK_SIZE)]
+
+        #  wrap chunk with ReportThread metadata class
+        return [ErrReportMetadata(thread_id, x) for x in chunks]
 
     @staticmethod
     def _get_heading_block(heading: str) -> dict:
         return {
-                   "type": "header",
-                   "text": {
-                       "type": "plain_text",
-                       "text": heading
-                   }
-               }
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": heading
+            }
+        }
 
-    def _prepare_test_report_block(self, func_name: str, reports: List[TestReport]) -> List[dict]:
-        status, errors = self._get_test_info(reports)
-
-        out = [self._create_testfunc_header_block(status, func_name)]
-        out.extend(self._create_testfunc_report_blocks(errors))
-
-        return out
+    def _prepare_err_report_block(self, reports: List[TestReport]) -> List[dict]:
+        status, err = self._get_test_info(reports)
+        return self._create_testfunc_report_blocks(err)
 
     @staticmethod
     def _get_test_info(reports: List[TestReport]):
